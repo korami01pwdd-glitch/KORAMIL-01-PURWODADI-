@@ -87,6 +87,7 @@ import java.util.Locale
 @Composable
 fun ActivityFormScreen(
     initialActivity: KomsosActivity?,
+    viewModel: com.example.viewmodel.KomsosViewModel? = null,
     onSave: (
         id: Long,
         title: String,
@@ -112,6 +113,8 @@ fun ActivityFormScreen(
 
     val todayStr = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date()) }
     val nowTimeStr = remember { SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date()) }
+
+    var selectedTab by remember { androidx.compose.runtime.mutableIntStateOf(0) }
 
     var title by remember { mutableStateOf(initialActivity?.title ?: "") }
     var date by remember { mutableStateOf(initialActivity?.date ?: todayStr) }
@@ -156,43 +159,142 @@ fun ActivityFormScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = if (initialActivity != null) "Edit Kegiatan Komsos" else "Form Input Komsos Babinsa",
-                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                        color = Color.White
-                    )
-                },
-                navigationIcon = {
-                    IconButton(
-                        onClick = onBack,
-                        modifier = Modifier.testTag("form_back_button")
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Kembali",
-                            tint = Color.White
+            Column {
+                TopAppBar(
+                    title = {
+                        Text(
+                            text = if (initialActivity != null) "Edit Kegiatan Komsos" else "Form Input Komsos Babinsa",
+                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                            color = Color.White
                         )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = ArmyGreenPrimary
+                    },
+                    navigationIcon = {
+                        IconButton(
+                            onClick = onBack,
+                            modifier = Modifier.testTag("form_back_button")
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Kembali",
+                                tint = Color.White
+                            )
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = ArmyGreenPrimary
+                    )
                 )
-            )
+
+                androidx.compose.material3.TabRow(
+                    selectedTabIndex = selectedTab,
+                    containerColor = ArmyGreenDark,
+                    contentColor = Color.White
+                ) {
+                    androidx.compose.material3.Tab(
+                        selected = selectedTab == 0,
+                        onClick = { selectedTab = 0 },
+                        text = {
+                            Text(
+                                "Form Komsos Firestore",
+                                fontWeight = if (selectedTab == 0) FontWeight.Bold else FontWeight.Normal,
+                                fontSize = 12.sp
+                            )
+                        },
+                        modifier = Modifier.testTag("tab_activity_form")
+                    )
+                    androidx.compose.material3.Tab(
+                        selected = selectedTab == 1,
+                        onClick = { selectedTab = 1 },
+                        text = {
+                            Text(
+                                "Detail & Foto Lapangan",
+                                fontWeight = if (selectedTab == 1) FontWeight.Bold else FontWeight.Normal,
+                                fontSize = 12.sp
+                            )
+                        },
+                        modifier = Modifier.testTag("tab_full_form")
+                    )
+                }
+            }
         }
     ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp)
-                .testTag("activity_form_screen"),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
-        ) {
-            // Section 1: Identitas Kegiatan
-            Card(
+        if (selectedTab == 0) {
+            // Dedicated ActivityForm composable fulfilling Date, Location, Description, Participant Count to Firestore
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+            ) {
+                ActivityForm(
+                    viewModel = viewModel,
+                    initialActivity = initialActivity,
+                    onSaveToFirestore = { fDate: String, fLoc: String, fDesc: String, fCount: Int ->
+                        if (viewModel != null) {
+                            viewModel.saveKomsosActivityToFirestore(
+                                date = fDate,
+                                location = fLoc,
+                                description = fDesc,
+                                participantCount = fCount,
+                                onSuccess = { onBack() },
+                                onError = {
+                                    // Fallback to onSave
+                                    onSave(
+                                        initialActivity?.id ?: 0L,
+                                        "Komsos di $fLoc",
+                                        fDate,
+                                        nowTimeStr,
+                                        fLoc,
+                                        fLoc,
+                                        "Tokoh Masyarakat",
+                                        "Warga $fLoc",
+                                        "Peserta Komsos",
+                                        fDesc.take(50),
+                                        fDesc,
+                                        "Koordinasi lanjutan bersama warga binaan",
+                                        "Selesai",
+                                        null,
+                                        babinsaName,
+                                        koramilName
+                                    )
+                                }
+                            )
+                        } else {
+                            onSave(
+                                initialActivity?.id ?: 0L,
+                                "Komsos di $fLoc",
+                                fDate,
+                                nowTimeStr,
+                                fLoc,
+                                fLoc,
+                                "Tokoh Masyarakat",
+                                "Warga $fLoc",
+                                "Peserta Komsos",
+                                fDesc.take(50),
+                                fDesc,
+                                "Koordinasi lanjutan bersama warga binaan",
+                                "Selesai",
+                                null,
+                                babinsaName,
+                                koramilName
+                            )
+                        }
+                    },
+                    onCancel = onBack,
+                    onSaveSuccess = { onBack() }
+                )
+            }
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .verticalScroll(rememberScrollState())
+                    .padding(16.dp)
+                    .testTag("activity_form_screen"),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                // Section 1: Identitas Kegiatan
+                Card(
                 shape = RoundedCornerShape(12.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.White),
                 elevation = CardDefaults.cardElevation(2.dp)
@@ -731,3 +833,30 @@ fun ActivityFormScreen(
         }
     }
 }
+}
+
+/**
+ * ActivityForm Composable
+ *
+ * Dedicated Composable that allows users to input details for a Komsos activity
+ * (Date, Location, Description, Participant Count) and save directly to Firebase Firestore.
+ */
+@Composable
+fun ActivityForm(
+    modifier: Modifier = Modifier,
+    viewModel: com.example.viewmodel.KomsosViewModel? = null,
+    initialActivity: KomsosActivity? = null,
+    onSaveToFirestore: ((date: String, location: String, description: String, participantCount: Int) -> Unit)? = null,
+    onCancel: (() -> Unit)? = null,
+    onSaveSuccess: ((String) -> Unit)? = null
+) {
+    com.example.ui.components.ActivityForm(
+        modifier = modifier,
+        viewModel = viewModel,
+        initialActivity = initialActivity,
+        onSaveToFirestore = onSaveToFirestore,
+        onCancel = onCancel,
+        onSaveSuccess = onSaveSuccess
+    )
+}
+

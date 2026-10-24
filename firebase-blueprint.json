@@ -1,0 +1,34 @@
+{
+  "entities": {
+    "User": {
+      "path": "/users/{userId}",
+      "fields": {
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "updatedAt": { "type": "number" }
+      }
+    },
+    "KomsosActivity": {
+      "path": "/users/{userId}/komsos_activities/{activityId}",
+      "fields": {
+        "title": { "type": "string" },
+        "date": { "type": "string" },
+        "time": { "type": "string" },
+        "village": { "type": "string" },
+        "locationDetail": { "type": "string" },
+        "targetCategory": { "type": "string" },
+        "contactPerson": { "type": "string" },
+        "contactRole": { "type": "string" },
+        "topic": { "type": "string" },
+        "summary": { "type": "string" },
+        "followUpAction": { "type": "string" },
+        "status": { "type": "string" },
+        "photoUri": { "type": "string", "optional": true },
+        "babinsaName": { "type": "string" },
+        "koramilName": { "type": "string" },
+        "createdAt": { "type": "number" },
+        "userId": { "type": "string" }
+      }
+    }
+  }
+}

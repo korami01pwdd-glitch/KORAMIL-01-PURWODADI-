@@ -17,6 +17,9 @@ interface KomsosDao {
     @Query("SELECT * FROM komsos_activities WHERE id = :id")
     suspend fun getActivityById(id: Long): KomsosActivity?
 
+    @Query("SELECT * FROM komsos_activities WHERE firestoreId = :firestoreId LIMIT 1")
+    suspend fun getByFirestoreId(firestoreId: String): KomsosActivity?
+
     @Query("""
         SELECT * FROM komsos_activities 
         WHERE title LIKE '%' || :query || '%' 

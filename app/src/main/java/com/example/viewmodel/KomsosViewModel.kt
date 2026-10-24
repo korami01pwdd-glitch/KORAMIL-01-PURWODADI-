@@ -1,13 +1,20 @@
 package com.example.viewmodel
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.data.local.KomsosDatabase
 import com.example.data.model.KomsosActivity
 import com.example.data.model.LessonModule
 import com.example.data.model.QuizQuestion
+import com.example.data.repository.FirestoreKomsosRepository
 import com.example.data.repository.KomsosRepository
+import com.google.firebase.FirebaseApp
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -33,15 +40,33 @@ data class QuizState(
     val isCompleted: Boolean = false
 )
 
-class KomsosViewModel(application: Application) : AndroidViewModel(application) {
+class KomsosViewModel(
+    application: Application,
+    val currentUserId: String,
+    val databaseId: String
+) : AndroidViewModel(application) {
 
     private val repository: KomsosRepository
+    private val firestoreRepository: FirestoreKomsosRepository
 
     init {
         val db = KomsosDatabase.getDatabase(application)
         repository = KomsosRepository(db.komsosDao())
+        val firestore = FirebaseFirestore.getInstance(FirebaseApp.getInstance(), databaseId)
+        val auth = FirebaseAuth.getInstance()
+        firestoreRepository = FirestoreKomsosRepository(firestore, auth)
+
         viewModelScope.launch {
             repository.seedIfEmpty()
+            try {
+                firestoreRepository.observeActivities().collect { cloudActivities ->
+                    for (cloudAct in cloudActivities) {
+                        repository.insertOrUpdateByFirestore(cloudAct)
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("KomsosViewModel", "Error syncing with Firestore", e)
+            }
         }
     }
 
@@ -92,7 +117,10 @@ class KomsosViewModel(application: Application) : AndroidViewModel(application) 
         _selectedActivity.value = activity
     }
 
-    // CRUD Operations
+    val firestoreRepo: FirestoreKomsosRepository
+        get() = firestoreRepository
+
+    // CRUD Operations with Room + Firestore dual sync
     fun saveActivity(
         id: Long = 0,
         title: String,
@@ -110,11 +138,16 @@ class KomsosViewModel(application: Application) : AndroidViewModel(application) 
         photoUri: String? = null,
         babinsaName: String,
         koramilName: String,
+        participantCount: Int = 1,
         onSuccess: () -> Unit
     ) {
         viewModelScope.launch {
+            val existing = if (id != 0L) repository.getActivityById(id) else null
+            val firestoreId = existing?.firestoreId ?: ""
+
             val activity = KomsosActivity(
                 id = id,
+                firestoreId = firestoreId,
                 title = title.trim(),
                 date = date.trim(),
                 time = time.trim(),
@@ -129,21 +162,104 @@ class KomsosViewModel(application: Application) : AndroidViewModel(application) 
                 status = status,
                 photoUri = photoUri,
                 babinsaName = babinsaName.ifBlank { "Serka Bambang Suryono" },
-                koramilName = koramilName.ifBlank { "Koramil 08/Binaan" }
+                koramilName = koramilName.ifBlank { "Koramil 08/Binaan" },
+                participantCount = participantCount
             )
+
             if (id == 0L) {
-                repository.insertActivity(activity)
+                val localId = repository.insertActivity(activity)
+                try {
+                    val result = firestoreRepository.createActivity(activity.copy(id = localId))
+                    val newFirestoreId = result.getOrNull()
+                    if (!newFirestoreId.isNullOrBlank()) {
+                        repository.updateActivity(activity.copy(id = localId, firestoreId = newFirestoreId))
+                    }
+                } catch (e: Exception) {
+                    Log.e("KomsosViewModel", "Error uploading to Firestore", e)
+                }
             } else {
                 repository.updateActivity(activity)
+                try {
+                    if (firestoreId.isNotBlank()) {
+                        firestoreRepository.updateActivity(firestoreId, activity)
+                    } else {
+                        val result = firestoreRepository.createActivity(activity)
+                        val newFirestoreId = result.getOrNull()
+                        if (!newFirestoreId.isNullOrBlank()) {
+                            repository.updateActivity(activity.copy(firestoreId = newFirestoreId))
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e("KomsosViewModel", "Error updating in Firestore", e)
+                }
             }
             _selectedActivity.value = null
             onSuccess()
         }
     }
 
+    // Direct Firestore save specifically tailored for ActivityForm (Date, Location, Description, Participant Count)
+    fun saveKomsosActivityToFirestore(
+        date: String,
+        location: String,
+        description: String,
+        participantCount: Int,
+        title: String = "",
+        onSuccess: (String) -> Unit = {},
+        onError: (Throwable) -> Unit = {}
+    ) {
+        viewModelScope.launch {
+            try {
+                val autoTitle = if (title.isNotBlank()) title.trim() else "Komsos di ${location.trim()}"
+                val nowTime = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()).format(java.util.Date())
+                val activity = KomsosActivity(
+                    title = autoTitle,
+                    date = date.trim(),
+                    time = nowTime,
+                    village = location.trim(),
+                    locationDetail = location.trim(),
+                    targetCategory = "Warga & Tokoh Masyarakat",
+                    contactPerson = "Warga $location",
+                    contactRole = "Peserta Komsos",
+                    topic = description.take(60).trim(),
+                    summary = description.trim(),
+                    followUpAction = "Pemantauan rutin wilayah binaan",
+                    status = "Selesai",
+                    participantCount = participantCount,
+                    babinsaName = "Serka Bambang Suryono",
+                    koramilName = "Koramil 08/Binaan"
+                )
+
+                val localId = repository.insertActivity(activity)
+                val result = firestoreRepository.createActivity(activity.copy(id = localId))
+                if (result.isSuccess) {
+                    val firestoreId = result.getOrNull() ?: ""
+                    if (firestoreId.isNotBlank()) {
+                        repository.updateActivity(activity.copy(id = localId, firestoreId = firestoreId))
+                    }
+                    _selectedActivity.value = null
+                    onSuccess(firestoreId)
+                } else {
+                    val err = result.exceptionOrNull() ?: Exception("Gagal menyimpan ke Firestore")
+                    onError(err)
+                }
+            } catch (e: Exception) {
+                Log.e("KomsosViewModel", "Error in saveKomsosActivityToFirestore", e)
+                onError(e)
+            }
+        }
+    }
+
     fun deleteActivity(activity: KomsosActivity) {
         viewModelScope.launch {
             repository.deleteActivity(activity)
+            if (activity.firestoreId.isNotBlank()) {
+                try {
+                    firestoreRepository.deleteActivity(activity.firestoreId)
+                } catch (e: Exception) {
+                    Log.e("KomsosViewModel", "Error deleting from Firestore", e)
+                }
+            }
             if (_selectedActivity.value?.id == activity.id) {
                 _selectedActivity.value = null
             }
@@ -197,5 +313,16 @@ class KomsosViewModel(application: Application) : AndroidViewModel(application) 
 
     fun resetQuiz() {
         _quizState.value = QuizState()
+    }
+}
+
+class KomsosViewModelFactory(
+    private val application: Application,
+    private val currentUserId: String,
+    private val databaseId: String
+) : ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        return KomsosViewModel(application, currentUserId, databaseId) as T
     }
 }

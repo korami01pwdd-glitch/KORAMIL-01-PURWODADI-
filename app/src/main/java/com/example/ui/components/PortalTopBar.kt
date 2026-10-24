@@ -1,6 +1,7 @@
 package com.example.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -12,15 +13,19 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.MilitaryTech
 import androidx.compose.material.icons.filled.TableChart
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -46,9 +51,12 @@ import com.example.ui.theme.GoldAccent
 fun PortalTopBar(
     title: String = "PORTAL KOMSOS BABINSA",
     subtitle: String = "TNI AD • Pembinaan Teritorial",
-    onExportClick: (() -> Unit)? = null
+    userEmail: String? = null,
+    onExportClick: (() -> Unit)? = null,
+    onSignOutClick: (() -> Unit)? = null
 ) {
     var showInfoDialog by remember { mutableStateOf(false) }
+    var showUserDialog by remember { mutableStateOf(false) }
 
     TopAppBar(
         title = {
@@ -84,7 +92,7 @@ fun PortalTopBar(
                             color = GoldAccent
                         ) {
                             Text(
-                                text = "WEB",
+                                text = "CLOUD",
                                 color = Color.Black,
                                 style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, fontSize = 9.sp),
                                 modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
@@ -92,9 +100,10 @@ fun PortalTopBar(
                         }
                     }
                     Text(
-                        text = "Portal Web Online • Siap Akses Browser (Tanpa Play Store)",
+                        text = userEmail ?: "Portal Komsos Terintegrasi Cloud",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color.White.copy(alpha = 0.85f)
+                        color = Color.White.copy(alpha = 0.85f),
+                        maxLines = 1
                     )
                 }
             }
@@ -121,6 +130,18 @@ fun PortalTopBar(
                     contentDescription = "Informasi Portal",
                     tint = Color.White
                 )
+            }
+            if (onSignOutClick != null) {
+                IconButton(
+                    onClick = { showUserDialog = true },
+                    modifier = Modifier.testTag("top_bar_account_button")
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.AccountCircle,
+                        contentDescription = "Akun Pengguna & Keluar",
+                        tint = Color.White
+                    )
+                }
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(
@@ -160,7 +181,7 @@ fun PortalTopBar(
                     )
                     Spacer(modifier = Modifier.size(8.dp))
                     Text(
-                        text = "Fitur Utama:\n• Akses Web Portal langsung di browser\n• Pencatatan kegiatan Komsos & upload foto dokumentasi\n• Pratinjau tabel interaktif ala Spreadsheet Excel\n• Ekspor data langsung ke file Excel (.xls) & CSV UTF-8\n• Modul materi pelajaran doktrin & metode Komsos\n• Kuis uji pemahaman Binter Babinsa",
+                        text = "Fitur Utama:\n• Akses Web Portal langsung di browser\n• Sinkronisasi Cloud Firestore & Google Sign-In\n• Pencatatan kegiatan Komsos & upload foto dokumentasi\n• Pratinjau tabel interaktif ala Spreadsheet Excel\n• Ekspor data langsung ke file Excel (.xls) & CSV UTF-8\n• Modul materi pelajaran doktrin & metode Komsos\n• Kuis uji pemahaman Binter Babinsa",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -169,8 +190,74 @@ fun PortalTopBar(
                         modifier = Modifier.fillMaxWidth(),
                         contentAlignment = Alignment.CenterEnd
                     ) {
-                        androidx.compose.material3.TextButton(onClick = { showInfoDialog = false }) {
+                        TextButton(onClick = { showInfoDialog = false }) {
                             Text("Tutup", fontWeight = FontWeight.Bold, color = ArmyGreenPrimary)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if (showUserDialog) {
+        Dialog(onDismissRequest = { showUserDialog = false }) {
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = MaterialTheme.colorScheme.surface,
+                tonalElevation = 6.dp,
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(20.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.AccountCircle,
+                        contentDescription = null,
+                        tint = ArmyGreenPrimary,
+                        modifier = Modifier.size(56.dp)
+                    )
+                    Spacer(modifier = Modifier.size(10.dp))
+                    Text(
+                        text = "Akun Babinsa Terverifikasi",
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                        color = ArmyGreenDark
+                    )
+                    Spacer(modifier = Modifier.size(4.dp))
+                    Text(
+                        text = userEmail ?: "Babinsa TNI AD",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.size(12.dp))
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = ArmyGreenPrimary.copy(alpha = 0.1f)
+                    ) {
+                        Text(
+                            text = "Cloud Firestore: Terhubung & Aktif",
+                            style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold),
+                            color = ArmyGreenDark,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.size(20.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        TextButton(onClick = { showUserDialog = false }) {
+                            Text("Batal")
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Button(
+                            onClick = {
+                                showUserDialog = false
+                                onSignOutClick?.invoke()
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                        ) {
+                            Text("Keluar", color = Color.White)
                         }
                     }
                 }

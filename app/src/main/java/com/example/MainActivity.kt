@@ -1,5 +1,6 @@
 package com.example
 
+import android.app.Application
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
@@ -13,17 +14,25 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.ui.components.PortalBottomNav
 import com.example.ui.components.PortalTopBar
 import com.example.ui.screens.ActivityFormScreen
 import com.example.ui.screens.ActivityListScreen
+import com.example.ui.screens.AuthScreen
 import com.example.ui.screens.HomeScreen
 import com.example.ui.screens.LessonsScreen
 import com.example.ui.screens.SpreadsheetScreen
 import com.example.ui.theme.MyApplicationTheme
+import com.example.util.authStateFlow
 import com.example.viewmodel.KomsosViewModel
+import com.example.viewmodel.KomsosViewModelFactory
 import com.example.viewmodel.Screen
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -31,14 +40,40 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             MyApplicationTheme {
-                MainApp()
+                AppNavigation()
             }
         }
     }
 }
 
 @Composable
-fun MainApp(viewModel: KomsosViewModel = viewModel()) {
+fun AppNavigation(auth: FirebaseAuth = FirebaseAuth.getInstance()) {
+    val currentUser by auth.authStateFlow().collectAsStateWithLifecycle(initialValue = auth.currentUser)
+    val user = currentUser
+    if (user == null) {
+        AuthScreen(auth = auth)
+    } else {
+        val context = LocalContext.current
+        val databaseId = stringResource(R.string.firestore_database_id)
+        val application = context.applicationContext as Application
+        val viewModel: KomsosViewModel = viewModel(
+            key = user.uid,
+            factory = KomsosViewModelFactory(application, user.uid, databaseId)
+        )
+        MainApp(
+            viewModel = viewModel,
+            user = user,
+            onSignOut = { auth.signOut() }
+        )
+    }
+}
+
+@Composable
+fun MainApp(
+    viewModel: KomsosViewModel,
+    user: FirebaseUser,
+    onSignOut: () -> Unit
+) {
     val currentScreen by viewModel.currentScreen.collectAsState()
     val allActivities by viewModel.allActivities.collectAsState()
     val filteredActivities by viewModel.filteredActivities.collectAsState()
@@ -65,9 +100,11 @@ fun MainApp(viewModel: KomsosViewModel = viewModel()) {
         topBar = {
             if (currentScreen != Screen.ADD_ACTIVITY) {
                 PortalTopBar(
+                    userEmail = user.email ?: user.displayName ?: "Babinsa Terverifikasi",
                     onExportClick = if (currentScreen != Screen.SPREADSHEET) {
                         { viewModel.navigateTo(Screen.SPREADSHEET) }
-                    } else null
+                    } else null,
+                    onSignOutClick = onSignOut
                 )
             }
         },
@@ -126,6 +163,7 @@ fun MainApp(viewModel: KomsosViewModel = viewModel()) {
                 Screen.ADD_ACTIVITY -> {
                     ActivityFormScreen(
                         initialActivity = selectedActivity,
+                        viewModel = viewModel,
                         onSave = { id, title, date, time, village, locationDetail, targetCategory,
                                    contactPerson, contactRole, topic, summary, followUpAction,
                                    status, photoUri, babinsaName, koramilName ->

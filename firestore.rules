@@ -1,0 +1,57 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidUserDoc() {
+      let data = request.resource.data;
+      return data.keys().hasAll(['email', 'displayName', 'updatedAt']) &&
+             data.email is string &&
+             data.displayName is string &&
+             data.updatedAt is number;
+    }
+
+    function isValidKomsosActivity(userId) {
+      let data = request.resource.data;
+      return data.keys().hasAll([
+               'title', 'date', 'time', 'village', 'locationDetail',
+               'targetCategory', 'contactPerson', 'contactRole',
+               'topic', 'summary', 'followUpAction', 'status',
+               'babinsaName', 'koramilName', 'createdAt', 'userId'
+             ]) &&
+             data.userId == userId &&
+             data.title is string && data.title.size() > 0 &&
+             data.date is string &&
+             data.village is string &&
+             data.status is string &&
+             data.createdAt is number &&
+             (!('photoUri' in data) || data.photoUri == null || data.photoUri is string) &&
+             (!('participantCount' in data) || (data.participantCount is int && data.participantCount >= 0));
+    }
+
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create, update: if isOwner(userId) && isValidUserDoc();
+      allow delete: if isOwner(userId);
+
+      match /komsos_activities/{activityId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidKomsosActivity(userId);
+        allow update: if isOwner(userId) && isValidKomsosActivity(userId);
+        allow delete: if isOwner(userId);
+      }
+    }
+
+    // Default deny all other paths
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

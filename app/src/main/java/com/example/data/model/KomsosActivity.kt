@@ -7,6 +7,7 @@ import androidx.room.PrimaryKey
 data class KomsosActivity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
+    val firestoreId: String = "",
     val title: String,
     val date: String, // format YYYY-MM-DD
     val time: String, // format HH:mm
@@ -22,5 +23,6 @@ data class KomsosActivity(
     val photoUri: String? = null, // URI atau path foto dokumentasi komsos
     val babinsaName: String = "Serka Bambang Suryono",
     val koramilName: String = "Koramil 08/Binaan",
-    val createdAt: Long = System.currentTimeMillis()
+    val createdAt: Long = System.currentTimeMillis(),
+    val participantCount: Int = 1
 )

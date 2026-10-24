@@ -42,6 +42,20 @@ class KomsosRepository(private val dao: KomsosDao) {
         dao.deleteById(id)
     }
 
+    suspend fun getByFirestoreId(firestoreId: String): KomsosActivity? = withContext(Dispatchers.IO) {
+        dao.getByFirestoreId(firestoreId)
+    }
+
+    suspend fun insertOrUpdateByFirestore(activity: KomsosActivity) = withContext(Dispatchers.IO) {
+        if (activity.firestoreId.isBlank()) return@withContext
+        val existing = dao.getByFirestoreId(activity.firestoreId)
+        if (existing != null) {
+            dao.updateActivity(activity.copy(id = existing.id))
+        } else {
+            dao.insertActivity(activity)
+        }
+    }
+
     suspend fun seedIfEmpty() = withContext(Dispatchers.IO) {
         if (dao.getCount() == 0) {
             dao.insertAll(KomsosDatabase.initialSampleActivities)
