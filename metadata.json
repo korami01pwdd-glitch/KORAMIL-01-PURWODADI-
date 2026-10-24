@@ -1,0 +1,6 @@
+{
+  "name": "Portal Komsos Babinsa",
+  "description": "Aplikasi portal kegiatan dan modul pembelajaran Komunikasi Sosial (Komsos) Babinsa dilengkapi perekaman kegiatan dan ekspor data spreadsheet Excel.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
