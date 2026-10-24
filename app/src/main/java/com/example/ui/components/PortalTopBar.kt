@@ -69,18 +69,32 @@ fun PortalTopBar(
                 }
                 Spacer(modifier = Modifier.width(10.dp))
                 Column {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = title,
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 0.5.sp
+                            ),
+                            color = Color.White
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Surface(
+                            shape = RoundedCornerShape(4.dp),
+                            color = GoldAccent
+                        ) {
+                            Text(
+                                text = "WEB",
+                                color = Color.Black,
+                                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, fontSize = 9.sp),
+                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
+                            )
+                        }
+                    }
                     Text(
-                        text = title,
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 0.5.sp
-                        ),
-                        color = Color.White
-                    )
-                    Text(
-                        text = subtitle,
+                        text = "Portal Web Online • Siap Akses Browser (Tanpa Play Store)",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color.White.copy(alpha = 0.8f)
+                        color = Color.White.copy(alpha = 0.85f)
                     )
                 }
             }
@@ -141,12 +155,12 @@ fun PortalTopBar(
                     }
                     Spacer(modifier = Modifier.size(12.dp))
                     Text(
-                        text = "Aplikasi portal berbasis sistem dashboard untuk menunjang kegiatan dan pembelajaran Komunikasi Sosial (Komsos) Bintara Pembina Desa (Babinsa) TNI AD.",
+                        text = "Aplikasi portal berbasis Web Dashboard untuk menunjang kegiatan dan pembelajaran Komunikasi Sosial (Komsos) Bintara Pembina Desa (Babinsa) TNI AD.\n\n🌐 Mode Web Portal (Tanpa Play Store):\nAplikasi ini dibuka dan dioperasikan langsung melalui Web Browser di laptop/komputer atau ponsel tanpa perlu mengunduh dari Google Play Store.",
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Spacer(modifier = Modifier.size(8.dp))
                     Text(
-                        text = "Fitur Utama:\n• Pencatatan kegiatan Komsos lapangan\n• Pratinjau tabel interaktif ala Spreadsheet Excel\n• Ekspor data langsung ke file Excel (.xls) & CSV UTF-8\n• Modul materi pelajaran doktrin & metode Komsos\n• Kuis uji pemahaman Binter Babinsa",
+                        text = "Fitur Utama:\n• Akses Web Portal langsung di browser\n• Pencatatan kegiatan Komsos & upload foto dokumentasi\n• Pratinjau tabel interaktif ala Spreadsheet Excel\n• Ekspor data langsung ke file Excel (.xls) & CSV UTF-8\n• Modul materi pelajaran doktrin & metode Komsos\n• Kuis uji pemahaman Binter Babinsa",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

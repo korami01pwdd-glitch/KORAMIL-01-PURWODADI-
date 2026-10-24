@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.AssignmentTurnedIn
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.MilitaryTech
 import androidx.compose.material.icons.filled.PendingActions
@@ -180,6 +181,65 @@ fun HomeScreen(
                             text = "Babinsa Koramil 08/Binaan • Wilayah Binaan 2 Desa",
                             style = MaterialTheme.typography.bodySmall,
                             color = OnArmyContainer.copy(alpha = 0.8f)
+                        )
+                    }
+                }
+            }
+        }
+
+        // Mode Portal Web Browser Card
+        item {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 6.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFF1F6EC)),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFC7D3C1))
+            ) {
+                Row(
+                    modifier = Modifier.padding(14.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(42.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFF2E7D32)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Language,
+                            contentDescription = "Web Portal",
+                            tint = Color.White,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = "Portal Web Browser Aktif",
+                                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                                color = ArmyGreenDark
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Surface(
+                                shape = RoundedCornerShape(4.dp),
+                                color = GoldAccent
+                            ) {
+                                Text(
+                                    text = "ONLINE",
+                                    color = Color.Black,
+                                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, fontSize = 9.sp),
+                                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
+                                )
+                            }
+                        }
+                        Text(
+                            text = "Portal ini dibuka langsung via browser web di HP & laptop tanpa perlu mengunduh atau mendaftar dari Play Store.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color(0xFF384934)
                         )
                     }
                 }
