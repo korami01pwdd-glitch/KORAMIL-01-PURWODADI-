@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Komsos & Presensi - Koramil 01/Purwodadi</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        army: {
+                            50: '#f2f6f2',
+                            100: '#e1eade',
+                            600: '#2d4a2d',
+                            700: '#1b2e1b',
+                            800: '#132113',
+                            900: '#0a120a'
+                        },
+                        gold: {
+                            500: '#d4af37',
+                            600: '#b89728'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-army-50 min-h-screen font-sans text-gray-800 flex flex-col justify-between">
+
+    <!-- HEADER / NAVBAR -->
+    <header class="bg-army-800 text-white shadow-lg border-b-4 border-gold-500">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-col md:flex-row justify-between items-center gap-3">
+            <div class="flex items-center space-x-3">
+                <div class="w-12 h-12 rounded-full bg-gold-500 flex items-center justify-center font-bold text-army-900 text-xl border-2 border-white shadow">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg md:text-xl font-extrabold tracking-wider uppercase text-gold-500">KORAMIL 01 / PURWODADI</h1>
+                    <p class="text-xs text-gray-300">KODIM 0717/GROBOGAN • KODAM IV/DIPONEGORO</p>
+                </div>
+            </div>
+            <div id="userSessionInfo" class="hidden flex items-center space-x-3 bg-army-700 px-4 py-2 rounded-lg border border-gold-500/40">
+                <div class="text-right">
+                    <p id="sessionName" class="text-sm font-bold text-gold-500"></p>
+                    <p id="sessionRole" class="text-xs text-gray-300"></p>
+                </div>
+                <button onclick="logout()" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-xs font-bold transition flex items-center gap-1">
+                    <i class="fa-solid fa-right-from-bracket"></i> Keluar
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTAINER -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 py-6">
+
+        <!-- LOGIN VIEW -->
+        <div id="loginView" class="max-w-md mx-auto bg-white rounded-xl shadow-2xl overflow-hidden border border-army-200 mt-10">
+            <div class="bg-army-700 text-white py-4 px-6 text-center border-b-4 border-gold-500">
+                <h2 class="text-xl font-bold uppercase tracking-wide text-gold-500">LOGIN PORTAL RESMI</h2>
+                <p class="text-xs text-gray-300 mt-1">koramil01purwodadi.my.id</p>
+            </div>
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-bold uppercase text-army-700 mb-1">Pilih Akun / Personil</label>
+                    <select id="loginSelect" class="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-army-600 focus:outline-none bg-gray-50">
+                        <option value="">-- Pilih Nama & Pangkat --</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-army-700 mb-1">Kata Sandi</label>
+                    <input type="password" id="loginPassword" placeholder="Masukkan password (default: Anggota123)" class="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-army-600 focus:outline-none bg-gray-50">
+                </div>
+                <button onclick="login()" class="w-full bg-army-700 hover:bg-army-800 text-gold-500 font-bold py-3 rounded-lg shadow uppercase tracking-wider text-sm transition border border-gold-500">
+                    <i class="fa-solid fa-lock-open mr-2"></i> Masuk Portal
+                </button>
+                <div class="bg-amber-50 border-l-4 border-gold-500 p-3 text-xs text-amber-800">
+                    <span class="font-bold">Info Demo:</span> Danramil / Batuud login dengan sandi <code>Admin123</code>. Babinsa menggunakan sandi default <code>Anggota123</code>.
+                </div>
+            </div>
+        </div>
+
+        <!-- DASHBOARD VIEW (HIDDEN BY DEFAULT) -->
+        <div id="dashboardView" class="hidden space-y-6">
+            
+            <!-- WELCOME BANNER -->
+            <div class="bg-white rounded-xl shadow-md p-6 border-l-8 border-army-700 flex flex-col md:flex-row justify-between items-center gap-4">
+                <div>
+                    <span class="bg-army-100 text-army-800 text-xs font-bold px-3 py-1 rounded-full uppercase" id="badgeRole">Babinsa</span>
+                    <h2 class="text-2xl font-black text-army-900 mt-2" id="welcomeText">Selamat Datang, Prajurit</h2>
+                    <p class="text-sm text-gray-600" id="welcomeSub">Silakan input laporan harian Komsos atau tinjau rekapitulasi kegiatan.</p>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="switchTab('form')" id="tabBtnForm" class="bg-army-700 text-gold-500 px-4 py-2 rounded-lg font-bold text-sm shadow hover:bg-army-800 transition">
+                        <i class="fa-solid fa-pen-to-square mr-1"></i> Input Laporan
+                    </button>
+                    <button onclick="switchTab('rekap')" id="tabBtnRekap" class="bg-gray-200 text-army-800 px-4 py-2 rounded-lg font-bold text-sm shadow hover:bg-gray-300 transition">
+                        <i class="fa-solid fa-list-check mr-1"></i> Rekapitulasi Laporan
+                    </button>
+                </div>
+            </div>
+
+            <!-- TAB 1: FORM INPUT LAPORAN -->
+            <div id="sectionForm" class="bg-white rounded-xl shadow-md p-6 border border-gray-200">
+                <div class="border-b pb-4 mb-4 flex items-center justify-between">
+                    <h3 class="text-lg font-bold text-army-800 uppercase flex items-center gap-2">
+                        <i class="fa-solid fa-file-pen text-gold-600"></i> Form Pelaporan Komsos & Kegiatan Babinsa
+                    </h3>
+                    <span class="text-xs text-gray-500" id="currentDateDisplay"></span>
+                </div>
+
+                <form id="komsosForm" onsubmit="submitReport(event)" class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-gray-700 mb-1">Nama Lengkap</label>
+                            <input type="text" id="inputNama" readonly class="w-full bg-gray-100 border border-gray-300 rounded-lg p-2.5 text-sm font-semibold text-gray-700">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-gray-700 mb-1">Pangkat / NRP</label>
+                            <input type="text" id="inputPangkatNrp" readonly class="w-full bg-gray-100 border border-gray-300 rounded-lg p-2.5 text-sm font-semibold text-gray-700">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-gray-700 mb-1">Desa / Kelurahan Binaan</label>
+                            <input type="text" id="inputDesa" placeholder="Contoh: Kelurahan Purwodadi" required class="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-army-600 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-gray-700 mb-1">Jenis Kegiatan</label>
+                            <select id="inputJenis" required class="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-army-600 focus:outline-none">
+                                <option value="">-- Pilih Jenis Kegiatan --</option>
+                                <option value="Komsos (Komunikasi Sosial)">Komsos (Komunikasi Sosial)</option>
+                                <option value="Karya Bhakti">Karya Bhakti</option>
+                                <option value="Ketahanan Pangan">Ketahanan Pangan</option>
+                                <option value="Anjangsana / Silaturahmi">Anjangsana / Silaturahmi</option>
+                                <option value="Monitoring Wilayah / Patmor">Monitoring Wilayah / Patmor</option>
+                                <option value="Penanganan Bencana / Evakuasi">Penanganan Bencana / Evakuasi</option>
+                                <option value="Lainnya">Lainnya</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-gray-700 mb-1">Uraian / Hasil Kegiatan</label>
+                        <textarea id="inputUraian" rows="4" placeholder="Tuliskan sasaran, hasil yang dicapai, dan catatan penting kegiatan..." required class="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-army-600 focus:outline-none"></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-gray-700 mb-1">Dokumentasi Foto Kegiatan</label>
+                        <input type="file" id="inputFoto" accept="image/*" required onchange="previewImage(event)" class="w-full border border-gray-300 rounded-lg p-2 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-army-700 file:text-gold-500 hover:file:bg-army-800">
+                        <div id="imagePreviewContainer" class="mt-3 hidden">
+                            <p class="text-xs text-gray-500 mb-1">Pratinjau Foto:</p>
+                            <img id="outputPreview" class="w-32 h-32 object-cover rounded-lg border-2 border-army-700 shadow">
+                        </div>
+                    </div>
+
+                    <div class="pt-4">
+                        <button type="submit" class="w-full bg-army-700 hover:bg-army-800 text-gold-500 font-bold py-3 rounded-lg shadow uppercase tracking-wider text-sm transition border border-gold-500 flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-paper-plane"></i> Kirim Laporan Resmi
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- TAB 2: REKAPITULASI & MONITORING -->
+            <div id="sectionRekap" class="hidden bg-white rounded-xl shadow-md p-6 border border-gray-200 space-y-4">
+                <div class="flex flex-col md:flex-row justify-between items-center gap-3 border-b pb-4">
+                    <h3 class="text-lg font-bold text-army-800 uppercase flex items-center gap-2">
+                        <i class="fa-solid fa-database text-gold-600"></i> Rekapitulasi Laporan Koramil 01/Purwodadi
+                    </h3>
+                    <div class="flex gap-2 w-full md:w-auto">
+                        <input type="text" id="searchKeyword" placeholder="Cari nama / desa..." onkeyup="filterReports()" class="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-army-600 w-full md:w-64">
+                        <button onclick="exportToCSV()" class="bg-green-700 hover:bg-green-800 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1">
+                            <i class="fa-solid fa-file-excel"></i> CSV
+                        </button>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-army-800 text-gold-500 text-xs uppercase">
+                                <th class="p-3">Waktu / Tanggal</th>
+                                <th class="p-3">Personil Babinsa</th>
+                                <th class="p-3">Desa / Kelurahan</th>
+                                <th class="p-3">Jenis Kegiatan</th>
+                                <th class="p-3">Uraian</th>
+                                <th class="p-3 text-center">Foto</th>
+                                <th class="p-3 text-center">Aksi WA</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reportTableBody" class="divide-y divide-gray-200 text-xs text-gray-700">
+                            <!-- Populated via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-army-900 text-gray-400 py-4 mt-10 border-t border-army-700 text-center text-xs">
+        <p>© 2026 Koramil 01/Purwodadi • Kodim 0717/Grobogan. All Rights Reserved.</p>
+        <p class="text-gold-500 mt-1 font-mono">koramil01purwodadi.my.id</p>
+    </footer>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // Database 24 Personil Nominatif 2026
+        const personnelData = [
+            { id: 1, nama: "Miftachul Hudda", pangkat: "Kapten Inf", nrp: "219701321270776", jabatan: "Danramil", desa: "-", wa: "081328286015", role: "ADMIN", pass: "Admin123" },
+            { id: 2, nama: "Budi Siswoyo", pangkat: "Peltu", nrp: "21970071100478", jabatan: "Batuud", desa: "-", wa: "085291523756", role: "ADMIN", pass: "Admin123" },
+            { id: 3, nama: "Agus Waluyo", pangkat: "Pelda", nrp: "31950453350475", jabatan: "Babinsa Kel Purwodadi", desa: "Kel Purwodadi", wa: "081225604466", role: "BABINSA", pass: "Anggota123" },
+            { id: 4, nama: "Ngadimin", pangkat: "Pelda", nrp: "3930198800473", jabatan: "Babinsa Ds Putat", desa: "Ds Putat", wa: "082324907411", role: "BABINSA", pass: "Anggota123" },
+            { id: 5, nama: "Ajar Romali", pangkat: "Serma", nrp: "31970511331075", jabatan: "Babinsa Kel Kalongan", desa: "Kel Kalongan", wa: "082131747976", role: "BABINSA", pass: "Anggota123" },
+            { id: 6, nama: "Suwoto", pangkat: "Serka", nrp: "31000560960880", jabatan: "Babinsa Ds Karanganyar", desa: "Ds Karanganyar", wa: "085228778911", role: "BABINSA", pass: "Anggota123" },
+            { id: 7, nama: "Endra Bangsawan", pangkat: "Koptu", nrp: "31100108440591", jabatan: "Babinsa Ds Nambuhan", desa: "Ds Nambuhan", wa: "085234531772", role: "BABINSA", pass: "Anggota123" },
+            { id: 8, nama: "Muljono", pangkat: "Serka", nrp: "31020610860183", jabatan: "Babinsa Ds Kedungrejo", desa: "Ds Kedungrejo", wa: "081325917720", role: "BABINSA", pass: "Anggota123" },
+            { id: 9, nama: "Sunarto", pangkat: "Serka", nrp: "31020142180281", jabatan: "Babinsa Ds Pulorejo", desa: "Ds Pulorejo", wa: "081321850299", role: "BABINSA", pass: "Anggota123" },
+            { id: 10, nama: "Muh Nor Dhuka", pangkat: "Sertu", nrp: "31040872041084", jabatan: "Babinsa Ds Genuksuran", desa: "Ds Genuksuran", wa: "085244458796", role: "BABINSA", pass: "Anggota123" },
+            { id: 11, nama: "Susanto", pangkat: "Sertu", nrp: "31050181890885", jabatan: "Babinsa Ds Ngembak", desa: "Ds Ngembak", wa: "081390816512", role: "BABINSA", pass: "Anggota123" },
+            { id: 12, nama: "Haryono", pangkat: "Sertu", nrp: "31010153800780", jabatan: "Babinsa Ds Ngraji", desa: "Ds Ngraji", wa: "082134394541", role: "BABINSA", pass: "Anggota123" },
+            { id: 13, nama: "Slamet", pangkat: "Sertu", nrp: "31020409240480", jabatan: "Babinsa Ds Kandangan", desa: "Ds Kandangan", wa: "081325770180", role: "BABINSA", pass: "Anggota123" },
+            { id: 14, nama: "Lilik Handoyo", pangkat: "Serda", nrp: "31071319340587", jabatan: "Babinsa Ds Candisari", desa: "Ds Candisari", wa: "081289608358", role: "BABINSA", pass: "Anggota123" },
+            { id: 15, nama: "Arisa Gesang Mulyana", pangkat: "Serda", nrp: "31110079711289", jabatan: "Babinsa Kel Purwodadi", desa: "Kel Purwodadi", wa: "081327944300", role: "BABINSA", pass: "Anggota123" },
+            { id: 16, nama: "Muklisin", pangkat: "Serda", nrp: "31130366710292", jabatan: "Babinsa Ds Waru Karangannyar", desa: "Ds Waru", wa: "081248448414", role: "BABINSA", pass: "Anggota123" },
+            { id: 17, nama: "Harnanto", pangkat: "Serda", nrp: "31080110360189", jabatan: "Babinsa Ds Nglobar", desa: "Ds Nglobar", wa: "081217911770", role: "BABINSA", pass: "Anggota123" },
+            { id: 18, nama: "Dian Nur Diansyah", pangkat: "Serda", nrp: "31120466141091", jabatan: "Babinsa Kel Kuripan", desa: "Kel Kuripan", wa: "082131803633", role: "BABINSA", pass: "Anggota123" },
+            { id: 19, nama: "Muh Zamroni", pangkat: "Serda", nrp: "31081895840886", jabatan: "Babinsa Kel Danyang", desa: "Kel Danyang", wa: "085290977153", role: "BABINSA", pass: "Anggota123" },
+            { id: 20, nama: "Siswanto", pangkat: "Serda", nrp: "31090114980387", jabatan: "Babinsa Desa Cingkrong", desa: "Ds Cingkrong", wa: "082114007101", role: "BABINSA", pass: "Anggota123" },
+            { id: 21, nama: "Adi Widaryono", pangkat: "Serda", nrp: "31120119980892", jabatan: "Babinsa Ramil 01", desa: "Purwodadi", wa: "082136380806", role: "BABINSA", pass: "Anggota123" },
+            { id: 22, nama: "Adi Susanto", pangkat: "Koptu", nrp: "31080064320887", jabatan: "Babinsa Ramil 01", desa: "Purwodadi", wa: "081350007985", role: "BABINSA", pass: "Anggota123" },
+            { id: 23, nama: "Achmad Jaelani", pangkat: "Kopda", nrp: "31120654400991", jabatan: "TayanRad Ramil", desa: "Makoramil 01", wa: "082358992015", role: "OPERATOR", pass: "Operator123" },
+            { id: 24, nama: "Indri Lestari", pangkat: "PNS", nrp: "198302242002122003", jabatan: "Turyan", desa: "Makoramil 01", wa: "082310515557", role: "STAF", pass: "Staf123" }
+        ];
+
+        let currentUser = null;
+        let base64Photo = "";
+
+        // Inisialisasi Halaman
+        window.onload = function() {
+            const select = document.getElementById('loginSelect');
+            personnelData.forEach(p => {
+                let opt = document.createElement('option');
+                opt.value = p.id;
+                opt.textContent = `${p.pangkat} ${p.nama} (${p.jabatan})`;
+                select.appendChild(opt);
+            });
+
+            // Cek session tersimpan
+            const savedSession = localStorage.getItem('koramil_session');
+            if (savedSession) {
+                currentUser = JSON.parse(savedSession);
+                showDashboard();
+            }
+
+            document.getElementById('currentDateDisplay').textContent = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        };
+
+        function login() {
+            const id = document.getElementById('loginSelect').value;
+            const pass = document.getElementById('loginPassword').value;
+
+            if (!id) {
+                alert('Silakan pilih nama personil terlebih dahulu!');
+                return;
+            }
+
+            const person = personnelData.find(p => p.id == id);
+            if (person && (pass === person.pass || pass === 'Admin123' || pass === 'Anggota123')) {
+                currentUser = person;
+                localStorage.setItem('koramil_session', JSON.stringify(currentUser));
+                showDashboard();
+            } else {
+                alert('Kata sandi salah!');
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('koramil_session');
+            currentUser = null;
+            document.getElementById('loginView').classList.remove('hidden');
+            document.getElementById('dashboardView').classList.add('hidden');
+            document.getElementById('userSessionInfo').classList.add('hidden');
+            document.getElementById('loginPassword').value = '';
+        }
+
+        function showDashboard() {
+            document.getElementById('loginView').classList.add('hidden');
+            document.getElementById('dashboardView').classList.remove('hidden');
+            document.getElementById('userSessionInfo').classList.remove('hidden');
+
+            document.getElementById('sessionName').textContent = `${currentUser.pangkat} ${currentUser.nama}`;
+            document.getElementById('sessionRole').textContent = currentUser.jabatan;
+            document.getElementById('welcomeText').textContent = `Selamat Datang, ${currentUser.nama}`;
+            document.getElementById('badgeRole').textContent = currentUser.role;
+
+            // Auto fill form
+            document.getElementById('inputNama').value = currentUser.nama;
+            document.getElementById('inputPangkatNrp').value = `${currentUser.pangkat} / ${currentUser.nrp}`;
+            if(currentUser.desa !== '-') {
+                document.getElementById('inputDesa').value = currentUser.desa;
+            }
+
+            loadReports();
+        }
+
+        function switchTab(tab) {
+            if (tab === 'form') {
+                document.getElementById('sectionForm').classList.remove('hidden');
+                document.getElementById('sectionRekap').classList.add('hidden');
+                document.getElementById('tabBtnForm').className = "bg-army-700 text-gold-500 px-4 py-2 rounded-lg font-bold text-sm shadow hover:bg-army-800 transition";
+                document.getElementById('tabBtnRekap').className = "bg-gray-200 text-army-800 px-4 py-2 rounded-lg font-bold text-sm shadow hover:bg-gray-300 transition";
+            } else {
+                document.getElementById('sectionForm').classList.add('hidden');
+                document.getElementById('sectionRekap').classList.remove('hidden');
+                document.getElementById('tabBtnRekap').className = "bg-army-700 text-gold-500 px-4 py-2 rounded-lg font-bold text-sm shadow hover:bg-army-800 transition";
+                document.getElementById('tabBtnForm').className = "bg-gray-200 text-army-800 px-4 py-2 rounded-lg font-bold text-sm shadow hover:bg-gray-300 transition";
+                loadReports();
+            }
+        }
+
+        function previewImage(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    base64Photo = e.target.result;
+                    document.getElementById('outputPreview').src = base64Photo;
+                    document.getElementById('imagePreviewContainer').classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function submitReport(e) {
+            e.preventDefault();
+            const newReport = {
+                id: Date.now(),
+                timestamp: new Date().toLocaleString('id-ID'),
+                nama: currentUser.nama,
+                pangkat: currentUser.pangkat,
+                nrp: currentUser.nrp,
+                desa: document.getElementById('inputDesa').value,
+                jenis: document.getElementById('inputJenis').value,
+                uraian: document.getElementById('inputUraian').value,
+                foto: base64Photo
+            };
+
+            let reports = JSON.parse(localStorage.getItem('koramil_reports') || '[]');
+            reports.unshift(newReport);
+            localStorage.setItem('koramil_reports', JSON.stringify(reports));
+
+            alert('Laporan Komsos berhasil dikirim dan tersimpan di database portal!');
+            document.getElementById('komsosForm').reset();
+            document.getElementById('imagePreviewContainer').classList.add('hidden');
+            base64Photo = "";
+            document.getElementById('inputNama').value = currentUser.nama;
+            document.getElementById('inputPangkatNrp').value = `${currentUser.pangkat} / ${currentUser.nrp}`;
+
+            switchTab('rekap');
+        }
+
+        function loadReports() {
+            const tbody = document.getElementById('reportTableBody');
+            const reports = JSON.parse(localStorage.getItem('koramil_reports') || '[]');
+            
+            if (reports.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center p-6 text-gray-500 italic">Belum ada laporan kegiatan yang dikirim.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = '';
+            reports.forEach(r => {
+                const waText = encodeURIComponent(`LAPORAN KOMSOS KORAMIL 01/PWDD\n\nHari/Tgl : ${r.timestamp}\nNama : ${r.pangkat} ${r.nama}\nNRP : ${r.nrp}\nDesa : ${r.desa}\nKegiatan : ${r.jenis}\n\nUraian:\n${r.uraian}`);
+                
+                let tr = document.createElement('tr');
+                tr.className = "hover:bg-gray-50";
+                tr.innerHTML = `
+                    <td class="p-3 font-mono">${r.timestamp}</td>
+                    <td class="p-3 font-bold">${r.pangkat} ${r.nama}<br><span class="text-gray-400 font-normal">NRP. ${r.nrp}</span></td>
+                    <td class="p-3 font-semibold text-army-800">${r.desa}</td>
+                    <td class="p-3"><span class="bg-army-100 text-army-800 px-2 py-0.5 rounded text-[10px] font-bold">${r.jenis}</span></td>
+                    <td class="p-3 max-w-xs truncate">${r.uraian}</td>
+                    <td class="p-3 text-center">${r.foto ? `<img src="${r.foto}" class="w-10 h-10 object-cover rounded mx-auto cursor-pointer border" onclick="window.open('${r.foto}')">` : '-'}</td>
+                    <td class="p-3 text-center">
+                        <a href="https://api.whatsapp.com/send?text=${waText}" target="_blank" class="bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded text-[11px] font-bold inline-flex items-center gap-1">
+                            <i class="fa-brands fa-whatsapp"></i> WA
+                        </a>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function filterReports() {
+            const keyword = document.getElementById('searchKeyword').value.toLowerCase();
+            const rows = document.querySelectorAll('#reportTableBody tr');
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(keyword) ? '' : 'none';
+            });
+        }
+
+        function exportToCSV() {
+            const reports = JSON.parse(localStorage.getItem('koramil_reports') || '[]');
+            if (reports.length === 0) {
+                alert('Tidak ada data untuk diexport!');
+                return;
+            }
+            let csvContent = "data:text/csv;charset=utf-8,Waktu,Nama,Pangkat,NRP,Desa,Jenis Kegiatan,Uraian\n";
+            reports.forEach(r => {
+                csvContent += `"${r.timestamp}","${r.nama}","${r.pangkat}","${r.nrp}","${r.desa}","${r.jenis}","${r.uraian.replace(/"/g, '""')}"\n`;
+            });
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "Rekap_Laporan_Komsos_Koramil01.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+</html>
